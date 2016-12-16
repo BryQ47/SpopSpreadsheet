@@ -1,0 +1,9 @@
+bin/*
+data/*
+obj/*
+tmp/*
+*.hc
+*.hi
+*.o
+.directory
+.idea/*
