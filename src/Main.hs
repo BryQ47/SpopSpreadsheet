@@ -1,48 +1,33 @@
 import System.IO
-import Data.List.Split -- cabal install split
+import Command
+import Spreadsheet
 
-insert _ _ [] = []
-insert 0 val (x:xs) = val:xs
-insert ref val (x:xs) = x : (insert (ref - 1) val xs)
-
-parseCellOp :: String -> (Maybe Int, Int)
-parseCellOp [] = (Nothing, 0)
-parseCellOp cmd = case (splitOn ":" cmd) of
-                       [] -> (Nothing, 0)
-                       (_:[]) -> (Nothing, 0)
-                       (refStr:valStr:_) -> let
-                                                ref = read refStr
-                                                val = read valStr
-                                            in (Just ref, val)
-        
-        
-
-updateSpreadsheet [] _ = []
-updateSpreadsheet (x:xs) cmd = case (parseCellOp cmd) of
-    (Nothing,_) -> (x:xs)
-    (Just ref, val) -> insert ref val (x:xs)
-
-
-addCell sheet = 0:sheet
-
-delCell [] = []
-delCell (x:xs) = xs
-
-renderSpreadsheet sheet = show sheet
+printError msg = putStrLn ("ERROR! " ++ msg)
+printSheet sheet = putStrLn (renderSpreadsheet sheet)
 
 mainLoop sheet = do
-    putStrLn (renderSpreadsheet sheet)
     putStr "> "
     hFlush stdout
-    cmd <- getLine
+    cmdText <- getLine
+    let 
+        cmd = parseCommand cmdText
     case cmd of
-        ":q" -> return ()
-        ":add" -> mainLoop (addCell sheet)
-        ":del" -> mainLoop (delCell sheet)
-        _ -> do
-            let
-                updatedSheet = updateSpreadsheet sheet cmd
-            mainLoop updatedSheet
+        Quit -> return ()
+        Empty -> mainLoop sheet
+        BadCommand errorMsg -> do
+            printError errorMsg
+            mainLoop sheet
+        ShowCell ref -> do
+            putStrLn (showCell sheet ref)
+            mainLoop sheet
+        _ -> case (updateSpreadsheet sheet cmd) of
+            Left errorMsg -> do
+                printError errorMsg
+                mainLoop sheet
+            Right updatedSheet -> do 
+                printSheet updatedSheet
+                mainLoop updatedSheet
 
-
-main = mainLoop [0,0,0,0,0]
+main = do
+    printSheet initialSpreadsheet
+    mainLoop initialSpreadsheet

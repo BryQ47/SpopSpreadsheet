@@ -1,9 +1,9 @@
 
 build:
-	ghc --make src/Main.hs -odir obj -tmpdir tmp -o bin/app
+	ghc --make src/Main.hs -isrc -odir obj -hidir obj -tmpdir tmp -o bin/app
 
 clean:
-	rm obj/*.o src/*.hi bin/*
+	rm obj/*.o obj/*.hi bin/* tmp/*
 
 rebuild: clean build
 
