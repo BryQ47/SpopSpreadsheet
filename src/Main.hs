@@ -1,11 +1,12 @@
 import System.IO
 import Command
 import Spreadsheet
+import FileOperations
 
 printError msg = putStrLn ("ERROR! " ++ msg)
 printSheet sheet = putStrLn (renderSpreadsheet sheet)
 
-initialFile = "data/example.csv"
+initialFile = "example.csv"
 
 mainLoop sheet currentFile = do
     putStr "> "
@@ -24,15 +25,18 @@ mainLoop sheet currentFile = do
             mainLoop sheet currentFile
         OpenFile filename -> do
             putStrLn ("Opening file " ++ filename)
-            -- TODO: Load spreadsheet from file
-            mainLoop sheet filename
+            serializedSheet <- loadSheet filename
+            let
+                newSheet = deserialize serializedSheet
+            printSheet newSheet
+            mainLoop newSheet filename
         WriteFile Nothing -> do
             putStrLn ("Writing to file " ++ currentFile)            
-            -- TODO: Save spreadsheet to file
+            saveSheet currentFile (serialize sheet)
             mainLoop sheet currentFile
         WriteFile (Just filename) -> do
             putStrLn ("Wrtiting to file " ++ filename)
-            -- TODO: Save spreadsheet to file
+            saveSheet filename (serialize sheet)
             mainLoop sheet filename
         _ -> case (updateSpreadsheet sheet cmd) of
             Left errorMsg -> do
@@ -43,5 +47,9 @@ mainLoop sheet currentFile = do
                 mainLoop updatedSheet currentFile
 
 main = do
+    serializedSheet <- loadSheet initialFile
+    putStrLn (show serializedSheet)
+    let
+        initialSpreadsheet = deserialize serializedSheet
     printSheet initialSpreadsheet
     mainLoop initialSpreadsheet initialFile

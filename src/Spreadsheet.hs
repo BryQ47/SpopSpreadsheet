@@ -2,16 +2,15 @@ module Spreadsheet (
     Spreadsheet(..),
     updateSpreadsheet,
     renderSpreadsheet,
-    initialSpreadsheet,
-    showCell
+    showCell,
+    serialize,
+    deserialize
 ) where
 
 import Cell
 import Command
 
 data Spreadsheet = Spreadsheet [Cell]
-
-initialSpreadsheet = Spreadsheet [Cell 0, Cell 0, Cell 0, Cell 0]
 
 -- Returns either error description or updated spreadsheet
 updateSpreadsheet :: Spreadsheet -> Command -> Either String Spreadsheet
@@ -37,6 +36,23 @@ showCell (Spreadsheet cells) ref =
         "Selected " ++ (show ref) ++ ": " ++ (show $ cells !! ref)
     else
         "Index outside of bounds of spreadsheet"
+
+------------------------ For file operations ------------------------
+
+serialize :: Spreadsheet -> [[String]]
+serialize (Spreadsheet cells) =
+    let
+        encodedCells = map show cells
+
+    in [encodedCells, encodedCells, encodedCells]
+
+deserialize :: [[String]] -> Spreadsheet
+deserialize cells = 
+    let
+        firstLine = head cells
+        decodedCells = map read firstLine
+    in Spreadsheet decodedCells
+
 ------------------------ Private part ------------------------
 
 insert _ _ [] = []
