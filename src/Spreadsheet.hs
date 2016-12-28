@@ -26,19 +26,19 @@ initialSpreadsheet = Spreadsheet [Cell 0, Cell 0, Cell 0, Cell 0]
 -- Returns either error description or updated spreadsheet
 updateSpreadsheet :: Spreadsheet -> Command -> Either String Spreadsheet
 updateSpreadsheet (Spreadsheet cells) cmd = case cmd of
-																		AddCol -> addColumn (Spreadsheet cells)
-																		DelCol -> delColumn (Spreadsheet cells)
-																		SumCell ref beg end -> Right (Spreadsheet (insert ref (Cell summed) cells)) 
-																											where  summed = sumCells beg end cells
-																		MultCell ref beg end -> Right (Spreadsheet (insert ref (Cell product) cells)) 
-																											where  product = multCells beg end cells
-																		AvgCell ref beg end -> Right (Spreadsheet (insert ref (Cell average) cells)) 
-																											where  average = avgCells beg end cells									
-																		UpdateCell ref val -> 
-																			if (ref >= 0 && ref < length cells) then
-																				Right (Spreadsheet (insert ref (Cell val) cells))
-																			else
-																				Left "Index outside of bounds of spreadsheet"
+    AddCol -> addColumn (Spreadsheet cells)
+    DelCol -> delColumn (Spreadsheet cells)
+    SumCell ref beg end -> Right (Spreadsheet (insert ref (Cell summed) cells)) 
+                                        where  summed = sumCells beg end cells
+    MultCell ref beg end -> Right (Spreadsheet (insert ref (Cell product) cells)) 
+                                        where  product = multCells beg end cells
+    AvgCell ref beg end -> Right (Spreadsheet (insert ref (Cell average) cells)) 
+                                        where  average = avgCells beg end cells									
+    UpdateCell ref val -> 
+        if (ref >= 0 && ref < length cells) then
+            Right (Spreadsheet (insert ref (Cell val) cells))
+        else
+            Left "Index outside of bounds of spreadsheet"
 
 renderSpreadsheet (Spreadsheet cells) = show cells
 
