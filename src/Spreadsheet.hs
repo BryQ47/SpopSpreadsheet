@@ -6,18 +6,8 @@ module Spreadsheet (
     showCell
 ) where
 
+import Cell
 import Command
-
------------------------- Cell definition ------------------------ 
-
-data Cell = Cell Int
-
-value (Cell v) = v
-
-instance Show Cell where
-    show (Cell v) = show v
-
------------------------- Public part ------------------------ 
 
 data Spreadsheet = Spreadsheet [Cell]
 
@@ -33,7 +23,7 @@ updateSpreadsheet (Spreadsheet cells) cmd = case cmd of
     MultCell ref beg end -> Right (Spreadsheet (insert ref (Cell product) cells)) 
                                         where  product = multCells beg end cells
     AvgCell ref beg end -> Right (Spreadsheet (insert ref (Cell average) cells)) 
-                                        where  average = avgCells beg end cells									
+                                        where  average = avgCells beg end cells                                                                        
     UpdateCell ref val -> 
         if (ref >= 0 && ref < length cells) then
             Right (Spreadsheet (insert ref (Cell val) cells))
@@ -64,9 +54,9 @@ sumCells _ _ [] = error("Cannot proceed sum operation - empty spreadsheet")
 sumCells 0 0 (x:xs) = value x
 sumCells 0 end (x:xs) = value x + sumCells 0 (end - 1) xs
 sumCells beg end list = if beg <= l || end <= l 
-									then sumCells (beg -1) end list
-									else error("Cannot count sum, wrong range") 
-									where l = length list
+                                                                        then sumCells (beg -1) end list
+                                                                        else error("Cannot count sum, wrong range") 
+                                                                        where l = length list
 
 -- Computes product of cells from range
 multCells:: Int -> Int -> [Cell] -> Int
@@ -74,13 +64,13 @@ multCells _ _ [] = error("Cannot proceed sum operation - empty spreadsheet")
 multCells 0 0 (x:xs) = value x
 multCells 0 end (x:xs) = value x * multCells 0 (end - 1) xs
 multCells beg end list = if  beg <= l || end <= l 
-									then multCells (beg -1) end list
-									else error("Cannot count product, wrong range") 
-									where l = length list
-									
+                                                                        then multCells (beg -1) end list
+                                                                        else error("Cannot count product, wrong range") 
+                                                                        where l = length list
+                                                                        
 -- Computes average fof cells from range
 avgCells:: Int -> Int -> [Cell] -> Int
 avgCells beg end list = if beg <= l || end <= l 
-										then (sumCells beg end list) `div` (end - beg + 1)
-										else error("Cannot count average, wrong range") 
-										where l = length list
+                                                                                then (sumCells beg end list) `div` (end - beg + 1)
+                                                                                else error("Cannot count average, wrong range") 
+                                                                                where l = length list

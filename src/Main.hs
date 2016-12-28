@@ -27,7 +27,7 @@ mainLoop sheet currentFile = do
             -- TODO: Load spreadsheet from file
             mainLoop sheet filename
         WriteFile Nothing -> do
-            putStrLn ("Writing to file " ++ currentFile)
+            putStrLn ("Writing to file " ++ currentFile)            
             -- TODO: Save spreadsheet to file
             mainLoop sheet currentFile
         WriteFile (Just filename) -> do

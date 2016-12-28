@@ -7,3 +7,4 @@ tmp/*
 *.o
 .directory
 .idea/*
+settings.json
