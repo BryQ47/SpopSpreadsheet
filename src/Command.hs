@@ -19,7 +19,9 @@ data Command =
         Quit |
         AddCol |
         DelCol |
-        UpdateCell Int Int |
+		AddRow |
+		DelRow |
+        UpdateCell (Int, Int) Int |
         BadCommand String |
         ShowCell Int |
         SumCell Int Int Int |
@@ -39,6 +41,8 @@ parseCommand cmdText = case cmdText of
     "" -> Empty
     ':':controlCmd -> case controlCmd of
                 "q" -> Quit
+                "addrow" -> AddRow
+                "delrow" -> DelRow				
                 "addcol" -> AddCol
                 "delcol" -> DelCol
                 'o':file -> case (readFilename file) of
@@ -50,16 +54,16 @@ parseCommand cmdText = case cmdText of
                 _ -> BadCommand "Unknown command"
     '!':ref -> ShowCell (read ref)
     _ -> if isInfixOf "Sum" cmdText then parseComplexCommand "Sum" cmdText
-                        else if isInfixOf "Mult" cmdText then parseComplexCommand "Mult" cmdText
-                    else if isInfixOf "Avg" cmdText then parseComplexCommand "Avg" cmdText
-                        else case (splitOn ":" cmdText) of
-                        [] -> BadCommand "Unknown command"
-                        (_:[]) -> BadCommand "Value not specified"
-                        (refStr:valStr:_) -> 
-                                let
-                                        ref = read refStr
-                                        val = read valStr
-                                in UpdateCell ref val
+			else if isInfixOf "Mult" cmdText then parseComplexCommand "Mult" cmdText
+            else if isInfixOf "Avg" cmdText then parseComplexCommand "Avg" cmdText
+            else case (splitOn ":" cmdText) of
+															[] -> BadCommand "Unknown command"
+															(_:[]) -> BadCommand "Value not specified"
+															(refStr:valStr:_) -> 
+																let
+																	ref = parseRefString refStr
+																	val = read valStr
+																in UpdateCell ref val
 
                                 
 -- pattern for Sum / Mult / Avg command: a:Sum(b:c) a - destination b - range start c - range end
@@ -80,4 +84,10 @@ parseComplexCommand complexCommand cmdText  = case (splitOn ":" cmdText) of
                 where 
                                 beg = read ((splitOn "(" (indexStart)) !! 1) :: Int
                                 end = read ((splitOn ")" (head indexEnd)) !! 0) :: Int
+
+parseRefString::String -> (Int, Int)
+parseRefString refStr =  case (splitOn "_" refStr) of
+									[] -> error ("Bad Command")
+									splited -> (read (splited !! 0) :: Int, read (splited !! 1) :: Int)
+								
 
