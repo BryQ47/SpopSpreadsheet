@@ -48,7 +48,7 @@ mainLoop sheet currentFile = do
 
 main = do
     serializedSheet <- loadSheet initialFile
-    putStrLn (show serializedSheet)
+    putStrLn (show serializedSheet) -- @TODO: remove from final version of project
     let
         initialSpreadsheet = deserialize serializedSheet
     printSheet initialSpreadsheet

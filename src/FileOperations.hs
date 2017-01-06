@@ -25,9 +25,6 @@ saveSheet name content = do
         writeFile (dataDir ++ name) (encode content)
         return ()
 
-trans [] = ()
-trans (x:xs) = trans xs
-
 decode :: String -> [[String]]
 decode str = 
         let

@@ -25,7 +25,7 @@ updateSpreadsheet (Spreadsheet cells) cmd = case cmd of
             Right (Spreadsheet (insert ref (Cell val) cells))
         else
             Left "Index outside of bounds of spreadsheet"
-			-}
+            -}
   {-  SumCell ref beg end -> Right (Spreadsheet (insert ref (Cell summed) cells)) 
                                         where  summed = sumCells beg end cells
     MultCell ref beg end -> Right (Spreadsheet (insert ref (Cell product) cells)) 
@@ -47,7 +47,7 @@ serialize :: Spreadsheet -> [[String]]
 serialize (Spreadsheet cells) =
     let
         encodedCells = map show cells
-		
+        
     in [encodedCells, encodedCells, encodedCells]
 
 deserialize :: [[String]] -> Spreadsheet
@@ -55,7 +55,7 @@ deserialize cells = Spreadsheet (parseStringContent cells)
 
 parseStringContent [] = []
 parseStringContent (x:xs) = [map read x] ++ parseStringContent xs 
-	
+    
 ------------------------ Private part ------------------------
 insertToSpreadsheet:: (Int, Int) -> Cell -> [[Cell]] ->[[Cell]]
 insertToSpreadsheet _ _ [[]] = [[]]
@@ -78,7 +78,7 @@ addRow (Spreadsheet cells) = Right (Spreadsheet (cells ++ [getRow (length (head 
 
 delRow (Spreadsheet []) = Left "Cannot remove row from empty spreadsheet"
 delRow (Spreadsheet cells) =  Right (Spreadsheet (take x cells))
-											where x = length cells - 1
+                                            where x = length cells - 1
 
 getRow:: Int -> [Cell]
 getRow 0 = []
@@ -86,23 +86,23 @@ getRow x = [Cell 0] ++ getRow (x-1)
 
 
 addColumn (Spreadsheet cells) = Right (Spreadsheet (newMatrix cells))
-													where
-													newMatrix [[]] = [[Cell 0]]
-													newMatrix [] = []
-													newMatrix (x:xs) = [x ++ [(Cell 0)]] ++ newMatrix xs 
+                                                    where
+                                                    newMatrix [[]] = [[Cell 0]]
+                                                    newMatrix [] = []
+                                                    newMatrix (x:xs) = [x ++ [(Cell 0)]] ++ newMatrix xs 
 
-													
+                                                    
 delColumn (Spreadsheet []) = Left "Cannot remove column from empty spreadsheet"
 delColumn (Spreadsheet cells) = Right (Spreadsheet (newMatrix cells))
-													where 
-													newMatrix [[]] = [[]]
-													newMatrix [] = []
-													newMatrix (x:xs) = [take ((length x) - 1) x] ++ newMatrix xs
+                                                    where 
+                                                    newMatrix [[]] = [[]]
+                                                    newMatrix [] = []
+                                                    newMatrix (x:xs) = [take ((length x) - 1) x] ++ newMatrix xs
 
 newMatrix2 [[]] = [[]]
 newMatrix2 [] = []
-newMatrix2 (x:xs) = [take ((length x) - 1) x] ++ newMatrix2 xs												
-													
+newMatrix2 (x:xs) = [take ((length x) - 1) x] ++ newMatrix2 xs                                                
+                                                    
 {-
 -- Computes sum of cells values from range  
 sumCells:: Int -> Int -> [Cell] -> Int
@@ -127,7 +127,7 @@ multCells beg end list = if  beg <= l || end <= l
 -- Computes average fof cells from range
 avgCells:: Int -> Int -> [Cell] -> Int
 avgCells beg end list = if beg <= l || end <= l 
-																	then (sumCells beg end list) `div` (end - beg + 1)
+                                                                    then (sumCells beg end list) `div` (end - beg + 1)
                                                                     else error("Cannot count average, wrong range") 
                                                                     where l = length list
-																	-}
+                                                                    -}
