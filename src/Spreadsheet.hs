@@ -7,38 +7,68 @@ module Spreadsheet (
     deserialize
 ) where
 
+import Data.List
+import Data.Matrix
+import Data.Maybe
 import Cell
 import Command
 
-data Spreadsheet = Spreadsheet [[Cell]]
+cellWidth = 15 -- For displaying purposes
+
+------------------------ Public part ------------------------
+
+data Spreadsheet = Spreadsheet (Matrix Cell)
 
 -- Returns either error description or updated spreadsheet
 updateSpreadsheet :: Spreadsheet -> Command -> Either String Spreadsheet
-updateSpreadsheet (Spreadsheet cells) cmd = case cmd of
-        AddCol -> addColumn (Spreadsheet cells)
-        DelCol -> delColumn (Spreadsheet cells)
-        AddRow -> addRow (Spreadsheet cells)
-        DelRow -> delRow (Spreadsheet cells)
-        UpdateCell ref val ->  Right (Spreadsheet (insertToSpreadsheet ref (Cell val) cells))
-    
-     {-   if ( fst ref >= 0 && ref < length cells) then
-            Right (Spreadsheet (insert ref (Cell val) cells))
-        else
-            Left "Index outside of bounds of spreadsheet"
-            -}
-  {-  SumCell ref beg end -> Right (Spreadsheet (insert ref (Cell summed) cells)) 
-                                        where  summed = sumCells beg end cells
-    MultCell ref beg end -> Right (Spreadsheet (insert ref (Cell product) cells)) 
-                                        where  product = multCells beg end cells
-    AvgCell ref beg end -> Right (Spreadsheet (insert ref (Cell average) cells)) 
-                                        where  average = avgCells beg end cells                                                                        
-   
--}
-renderSpreadsheet (Spreadsheet cells) = show cells
+updateSpreadsheet (Spreadsheet cells) cmd = 
+    let
+        rowsCnt = nrows cells
+        colsCnt = ncols cells
+        validate = validateRefs rowsCnt colsCnt
+    in case cmd of
+        AddCol ->
+            Right (Spreadsheet (setSize EmptyCell rowsCnt (colsCnt + 1) cells))
+        DelCol ->
+            if colsCnt > 0 then
+                Right (Spreadsheet (setSize EmptyCell rowsCnt (colsCnt - 1) cells))
+            else
+                Left "Spreadsheet must have at least one column"
+        AddRow -> 
+            Right (Spreadsheet (setSize EmptyCell (rowsCnt + 1) colsCnt cells))
+        DelRow ->
+            if rowsCnt > 0 then
+                Right (Spreadsheet (setSize EmptyCell (rowsCnt - 1) colsCnt cells))
+            else
+                Left "Spreadsheet must have at least one row"
+        UpdateCell ref cell ->
+            if (validate [ref]) then
+                case cell of
+                    OpCell _ refs ->
+                        if (validate refs) then
+                            Right (Spreadsheet (setElem cell (refToTuple ref) cells))
+                        else
+                            Left "Cell refers to the cells outside of the spreadsheet"  
+                    _ ->
+                        Right (Spreadsheet (setElem cell (refToTuple ref) cells))
+            else
+                Left "Cell ref points outside of the spreadsheet"                                                                 
 
-showCell (Spreadsheet cells) ref = 
-    if (ref >= 0 && ref < length cells) then
-        "Selected " ++ (show ref) ++ ": " ++ (show $ cells !! ref)
+
+renderSpreadsheet :: Spreadsheet -> String
+renderSpreadsheet (Spreadsheet cells) = 
+    let
+        rowsSeparatingLine = '\n':['-' | x <- [1..(cellWidth+1)*(ncols cells)]] ++ "\n"
+        rows = toLists cells
+        rowStrings = map (\row -> '|':(intercalate "|" $ map formatCell $ map (evaluateCell cells) row)) rows
+        spreadsheetString = intercalate rowsSeparatingLine rowStrings
+    in
+        spreadsheetString
+
+showCell :: Spreadsheet -> Ref -> String
+showCell (Spreadsheet cells) (Ref rowId colId) = 
+    if (validateRefs (nrows cells) (ncols cells) [(Ref rowId colId)]) then
+        "Selected " ++ (show (Ref rowId colId)) ++ ":" ++ (show $ getElem rowId colId cells)
     else
         "Index outside of bounds of spreadsheet"
 
@@ -46,88 +76,77 @@ showCell (Spreadsheet cells) ref =
 serialize :: Spreadsheet -> [[String]]
 serialize (Spreadsheet cells) =
     let
-        encodedCells = map show cells
-        
-    in [encodedCells, encodedCells, encodedCells]
+        cellLists = toLists cells
+    in
+        map (\row -> map show row) cellLists
 
 deserialize :: [[String]] -> Spreadsheet
-deserialize cells = Spreadsheet (parseStringContent cells)
-
-parseStringContent [] = []
-parseStringContent (x:xs) = [map read x] ++ parseStringContent xs 
+deserialize cellLists =
+    let
+        decodedCellLists = map (\row -> mapMaybe readCell row) cellLists
+    in
+        Spreadsheet (fromLists decodedCellLists)
     
 ------------------------ Private part ------------------------
-insertToSpreadsheet:: (Int, Int) -> Cell -> [[Cell]] ->[[Cell]]
-insertToSpreadsheet _ _ [[]] = [[]]
-insertToSpreadsheet _ _ []= []
-insertToSpreadsheet (0,b) cell (x:xs) = [(insert b cell x)] ++ xs
-insertToSpreadsheet (a,b) cell (x:xs) =  [x] ++ insertToSpreadsheet (a-1, b) cell xs
 
-insert::Int -> Cell -> [Cell] -> [Cell]
-insert _ _ [] = []
-insert 0 val (x:xs) = val:xs
-insert ref val (x:xs) = x : (insert (ref - 1) val xs)
+validateRefs :: Int -> Int -> [Ref] -> Bool
+validateRefs rowsCnt colsCnt refs = 
+    let 
+        checkRefs [] = True
+        checkRefs ((Ref rowId colId):otherRefs) = 
+            (rowId > 0) && (rowId <= rowsCnt) && (colId > 0) && (colId <= colsCnt) && (checkRefs otherRefs)
+    in
+        checkRefs refs     
 
--- find proper row in the spreadsheet matrix
-findRow _ [[]] = []
-findRow 0 (x:xs) = x
-findRow a (x:xs) = findRow (a-1) xs
+data EvaluatedCell =
+    EvaluatedAsString String |
+    EvaluatedAsNumber Double       
 
-addRow (Spreadsheet []) = Right (Spreadsheet [[Cell 0]])
-addRow (Spreadsheet cells) = Right (Spreadsheet (cells ++ [getRow (length (head cells))]))
+instance Show EvaluatedCell where
+    show (EvaluatedAsString str) = str
+    show (EvaluatedAsNumber num) = show num
 
-delRow (Spreadsheet []) = Left "Cannot remove row from empty spreadsheet"
-delRow (Spreadsheet cells) =  Right (Spreadsheet (take x cells))
-                                            where x = length cells - 1
+cellFiller = [' ' | x <- [1..cellWidth]]
+formatCell :: EvaluatedCell -> String
+formatCell evaluatedCell =
+    let 
+        rawStr = show evaluatedCell
+    in
+        if (length rawStr) > cellWidth then
+            (take (cellWidth - 3) rawStr) ++ "..."
+        else
+            take cellWidth (rawStr ++ cellFiller)
 
-getRow:: Int -> [Cell]
-getRow 0 = []
-getRow x = [Cell 0] ++ getRow (x-1)
+getNumValue :: EvaluatedCell -> Maybe Double
+getNumValue (EvaluatedAsString _) = Nothing
+getNumValue (EvaluatedAsNumber x) = Just x
 
+safeGetElem :: Int -> Int -> Matrix Cell -> Cell
+safeGetElem rowId colId cellMat =
+    let
+        colCnt = ncols cellMat
+        rowCnt = nrows cellMat
+        addrOk = validateRefs rowCnt colCnt [(Ref rowId colId)]
+    in
+        if addrOk then
+            getElem rowId colId cellMat
+        else EmptyCell
+    
 
-addColumn (Spreadsheet cells) = Right (Spreadsheet (newMatrix cells))
-                                                    where
-                                                    newMatrix [[]] = [[Cell 0]]
-                                                    newMatrix [] = []
-                                                    newMatrix (x:xs) = [x ++ [(Cell 0)]] ++ newMatrix xs 
-
-                                                    
-delColumn (Spreadsheet []) = Left "Cannot remove column from empty spreadsheet"
-delColumn (Spreadsheet cells) = Right (Spreadsheet (newMatrix cells))
-                                                    where 
-                                                    newMatrix [[]] = [[]]
-                                                    newMatrix [] = []
-                                                    newMatrix (x:xs) = [take ((length x) - 1) x] ++ newMatrix xs
-
-newMatrix2 [[]] = [[]]
-newMatrix2 [] = []
-newMatrix2 (x:xs) = [take ((length x) - 1) x] ++ newMatrix2 xs                                                
-                                                    
-{-
--- Computes sum of cells values from range  
-sumCells:: Int -> Int -> [Cell] -> Int
-sumCells _ _ [] = error("Cannot proceed sum operation - empty spreadsheet")
-sumCells 0 0 (x:xs) = value x
-sumCells 0 end (x:xs) = value x + sumCells 0 (end - 1) xs
-sumCells beg end list = if beg <= l || end <= l 
-                                                                        then sumCells (beg -1) end list
-                                                                        else error("Cannot count sum, wrong range") 
-                                                                        where l = length list
-
--- Computes product of cells from range
-multCells:: Int -> Int -> [Cell] -> Int
-multCells _ _ [] = error("Cannot proceed sum operation - empty spreadsheet")
-multCells 0 0 (x:xs) = value x
-multCells 0 end (x:xs) = value x * multCells 0 (end - 1) xs
-multCells beg end list = if  beg <= l || end <= l 
-                                                                        then multCells (beg -1) end list
-                                                                        else error("Cannot count product, wrong range") 
-                                                                        where l = length list
-                                                                        
--- Computes average fof cells from range
-avgCells:: Int -> Int -> [Cell] -> Int
-avgCells beg end list = if beg <= l || end <= l 
-                                                                    then (sumCells beg end list) `div` (end - beg + 1)
-                                                                    else error("Cannot count average, wrong range") 
-                                                                    where l = length list
-                                                                    -}
+evaluateCell :: Matrix Cell -> Cell -> EvaluatedCell
+evaluateCell cellMat cell = case cell of
+    EmptyCell -> EvaluatedAsString ""
+    StrCell str -> EvaluatedAsString str
+    NumCell num -> EvaluatedAsNumber num
+    OpCell opType refs ->
+        let
+            evaluatedRefs = map (\(Ref rowId colId) -> evaluateCell cellMat (safeGetElem rowId colId cellMat)) refs
+            values = mapMaybe getNumValue evaluatedRefs
+        in
+            if ((length refs) == (length values)) then
+                case opType of
+                    OpSum -> EvaluatedAsNumber (sum values)
+                    OpMult -> EvaluatedAsNumber (foldr (*) 1 values)
+                    OpAvg -> EvaluatedAsNumber ((sum values) / (fromIntegral $ length values))
+            else
+                EvaluatedAsString "#bad formula"

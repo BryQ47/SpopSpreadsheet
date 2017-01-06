@@ -9,7 +9,7 @@ import System.Directory (removeFile)
 
 tmpFile = "tmp/data.tmp"
 dataDir = "data/"
-colSeparator = ","
+colSeparator = "\t"
 rowSeparator = "\n"
 
 loadSheet :: FilePath -> IO [[String]]
