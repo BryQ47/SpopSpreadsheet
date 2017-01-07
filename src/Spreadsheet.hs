@@ -45,7 +45,9 @@ updateSpreadsheet (Spreadsheet cells) cmd =
             if (validate [ref]) then
                 case cell of
                     OpCell _ refs ->
-                        if (validate refs) then
+                        if ((validateOppCell ref refs) == True ) then
+                            Left "Destination cell included in range expresion" 
+                        else if ((validate refs) == True) then
                             Right (Spreadsheet (setElem cell (refToTuple ref) cells))
                         else
                             Left "Cell refers to the cells outside of the spreadsheet"  
@@ -109,6 +111,11 @@ validateRefs rowsCnt colsCnt refs =
     in
         checkRefs refs     
 
+validateOppCell:: Ref -> [Ref] -> Bool
+validateOppCell cellRef [] = False
+validateOppCell cellRef (x:xs) = refToTuple cellRef == refToTuple x || validateOppCell cellRef xs
+        
+        
 data EvaluatedCell =
     EvaluatedAsString String |
     EvaluatedAsNumber Double       
