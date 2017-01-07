@@ -21,6 +21,9 @@ data Ref = Ref Int Int
 refToTuple :: Ref -> (Int,Int)
 refToTuple (Ref x y) = (x, y)
 
+tupleToRef :: (Int, Int) -> Ref
+tupleToRef (x,y) = (Ref x y)
+
 instance Show Ref where
     show (Ref x y) = (show x) ++ refSeparator ++ (show y)
 
@@ -94,6 +97,12 @@ showRefs refs = intercalate refsSeparator $ map show refs
 readRange :: String -> Maybe [Ref]
 readRange str = case (splitOn refsSeparator str) of
     [] -> Nothing
+    (refBeg:refEnd:[]) -> let 
+                       (Just x) = parseRefString refBeg
+                       (Just y) = parseRefString refEnd
+                       in
+                            if(fst (refToTuple x) == fst (refToTuple y)) then findColRange x y
+                            else findRowRange x y
     refList ->
         let
             parsedRefList = mapMaybe parseRefString refList
@@ -103,3 +112,10 @@ readRange str = case (splitOn refsSeparator str) of
             else
                 Just parsedRefList
 
+-- in case of range in form e.g (1,4; 1,8) - the same row, ranges throuhout columns                
+findColRange::Ref -> Ref -> Maybe [Ref]
+findColRange x y = Just[ tupleToRef (a,b) | a <- [fst (refToTuple x)], b <- [snd (refToTuple x) .. snd (refToTuple y)]] 
+                                                      
+-- in case of range in form e.g (1,2; 5,2) - the same column, ranges throuhout rows                
+findRowRange::Ref -> Ref -> Maybe [Ref]
+findRowRange x y = Just [ Ref a b | a <- [fst (refToTuple x) .. fst (refToTuple y)], b <- [snd (refToTuple x)]] 

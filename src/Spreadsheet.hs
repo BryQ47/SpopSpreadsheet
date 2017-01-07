@@ -58,13 +58,24 @@ updateSpreadsheet (Spreadsheet cells) cmd =
 renderSpreadsheet :: Spreadsheet -> String
 renderSpreadsheet (Spreadsheet cells) = 
     let
-        rowsSeparatingLine = '\n':['-' | x <- [1..(cellWidth+1)*(ncols cells)]] ++ "\n"
+        firstRow = '\n' : '\t' : getFristRowString 1 (ncols cells) 
+        rowsSeparatingLine = '\n' : '\t' : ['-' | x <- [1..(cellWidth+1)*(ncols cells)]] ++ "\n"
         rows = toLists cells
-        rowStrings = map (\row -> '|':(intercalate "|" $ map formatCell $ map (evaluateCell cells) row)) rows
-        spreadsheetString = intercalate rowsSeparatingLine rowStrings
+        rowStrings = map (\row -> '\t' : '|':(intercalate "|" $ map formatCell $ map (evaluateCell cells) row)) rows
+        indexedRowStrings = [firstRow] ++ (addRowsIndexes 1 rows rowStrings)
+        spreadsheetString = intercalate rowsSeparatingLine indexedRowStrings
     in
         spreadsheetString
 
+addRowsIndexes:: Int -> [[Cell]] -> [String] -> [String]
+addRowsIndexes i [] _ = []
+addRowsIndexes i(x:xs) (y:ys) = [show i ++ y] ++ (addRowsIndexes (i+1) xs ys)  
+
+
+getFristRowString:: Int -> Int -> String
+getFristRowString a nCols = if a <= nCols then show a ++ [' '| x <- [1..cellWidth]] ++ getFristRowString (a + 1) nCols
+                            else []
+        
 showCell :: Spreadsheet -> Ref -> String
 showCell (Spreadsheet cells) (Ref rowId colId) = 
     if (validateRefs (nrows cells) (ncols cells) [(Ref rowId colId)]) then
