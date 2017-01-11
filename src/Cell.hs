@@ -4,7 +4,8 @@ module Cell (
     Ref(..),
     readCell,
     parseRefString,
-    refToTuple
+    refToTuple,
+    tryReadInt
 ) where
 
 import Data.Char

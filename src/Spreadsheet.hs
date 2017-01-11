@@ -1,5 +1,6 @@
 module Spreadsheet (
     Spreadsheet(..),
+    createSpreadsheet,
     updateSpreadsheet,
     renderSpreadsheet,
     showCell,
@@ -18,6 +19,11 @@ cellWidth = 15 -- For displaying purposes
 ------------------------ Public part ------------------------
 
 data Spreadsheet = Spreadsheet (Matrix Cell)
+
+createSpreadsheet :: Int -> Int -> Spreadsheet
+createSpreadsheet width height =
+    Spreadsheet $ matrix width height (\_ -> EmptyCell)
+
 
 -- Returns either error description or updated spreadsheet
 updateSpreadsheet :: Spreadsheet -> Command -> Either String Spreadsheet

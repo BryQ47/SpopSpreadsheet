@@ -23,6 +23,11 @@ mainLoop sheet currentFile = do
         ShowCell ref -> do
             putStrLn (showCell sheet ref)
             mainLoop sheet currentFile
+        CreateNew widht height -> do
+            let
+                newSheet = createSpreadsheet widht height
+            printSheet newSheet
+            mainLoop newSheet currentFile
         OpenFile filename -> do
             putStrLn ("Opening file " ++ filename)
             serializedSheet <- loadSheet filename

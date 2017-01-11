@@ -18,7 +18,8 @@ data Command =
         ShowCell Ref |
         Empty |
         WriteFile (Maybe String) |
-        OpenFile String
+        OpenFile String |
+        CreateNew Int Int
 
 parseCommand :: String -> Command
 parseCommand cmdText = case cmdText of
@@ -29,6 +30,13 @@ parseCommand cmdText = case cmdText of
                 "delrow" -> DelRow                
                 "addcol" -> AddCol
                 "delcol" -> DelCol
+                'n':dimensions -> case (splitOn " " $ trim dimensions) of
+                        [] -> BadCommand "Missing dimensions of a new spreadsheet"
+                        (_:[]) -> BadCommand "Missing height of a new spreadsheet"
+                        (w:h:[]) -> case ((tryReadInt w), (tryReadInt h)) of
+                                ((Just width), (Just height)) -> CreateNew width height
+                                _ -> BadCommand "Incorrect dimensions format for a new spreadsheet"
+                        _ -> BadCommand "Too many parameters of a new spreadsheet given"
                 'o':file -> case (readFilename file) of
                         Nothing -> BadCommand "Filename is required"
                         Just filename -> OpenFile filename
