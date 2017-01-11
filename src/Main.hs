@@ -6,7 +6,7 @@ import FileOperations
 printError msg = putStrLn ("ERROR! " ++ msg)
 printSheet sheet = putStrLn (renderSpreadsheet sheet)
 
-initialFile = "example.csv"
+initialFile = "newSheet.csv"
 
 mainLoop sheet currentFile = do
     putStr "> "
@@ -23,9 +23,9 @@ mainLoop sheet currentFile = do
         ShowCell ref -> do
             putStrLn (showCell sheet ref)
             mainLoop sheet currentFile
-        CreateNew widht height -> do
+        CreateNew rows cols -> do
             let
-                newSheet = createSpreadsheet widht height
+                newSheet = createSpreadsheet rows cols
             printSheet newSheet
             mainLoop newSheet currentFile
         OpenFile filename -> do
@@ -52,8 +52,7 @@ mainLoop sheet currentFile = do
                 mainLoop updatedSheet currentFile
 
 main = do
-    serializedSheet <- loadSheet initialFile
     let
-        initialSpreadsheet = deserialize serializedSheet
+        initialSpreadsheet = createSpreadsheet 5 5
     printSheet initialSpreadsheet
     mainLoop initialSpreadsheet initialFile

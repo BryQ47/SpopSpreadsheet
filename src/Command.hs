@@ -33,8 +33,8 @@ parseCommand cmdText = case cmdText of
                 'n':dimensions -> case (splitOn " " $ trim dimensions) of
                         [] -> BadCommand "Missing dimensions of a new spreadsheet"
                         (_:[]) -> BadCommand "Missing height of a new spreadsheet"
-                        (w:h:[]) -> case ((tryReadInt w), (tryReadInt h)) of
-                                ((Just width), (Just height)) -> CreateNew width height
+                        (r:c:[]) -> case ((tryReadInt r), (tryReadInt c)) of
+                                ((Just rows), (Just cols)) -> CreateNew rows cols
                                 _ -> BadCommand "Incorrect dimensions format for a new spreadsheet"
                         _ -> BadCommand "Too many parameters of a new spreadsheet given"
                 'o':file -> case (readFilename file) of

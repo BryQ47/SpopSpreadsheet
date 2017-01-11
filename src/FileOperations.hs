@@ -7,8 +7,8 @@ import Data.List
 import Data.List.Split
 import System.Directory (removeFile)
 
-tmpFile = "tmp/data.tmp"
-dataDir = "data/"
+tmpFile = "sheet.tmp"
+dataDir = ""
 colSeparator = "\t"
 rowSeparator = "\n"
 

@@ -21,8 +21,8 @@ cellWidth = 15 -- For displaying purposes
 data Spreadsheet = Spreadsheet (Matrix Cell)
 
 createSpreadsheet :: Int -> Int -> Spreadsheet
-createSpreadsheet width height =
-    Spreadsheet $ matrix width height (\_ -> EmptyCell)
+createSpreadsheet rows cols =
+    Spreadsheet $ matrix rows cols (\_ -> EmptyCell)
 
 
 -- Returns either error description or updated spreadsheet
