@@ -14,7 +14,8 @@ import Data.Maybe
 import Cell
 import Command
 
-cellWidth = 15 -- For displaying purposes
+-- For displaying purposes, content longer then 15 characters will be trimmed
+cellWidth = 15 
 
 ------------------------ Public part ------------------------
 
@@ -63,6 +64,8 @@ updateSpreadsheet (Spreadsheet cells) cmd =
                 Left "Cell ref points outside of the spreadsheet"                                                                 
 
 
+-- function for rendering spreadsheet in console, every cell can takes only 15 characters
+-- next to each row and column we displays order number to provide readability                
 renderSpreadsheet :: Spreadsheet -> String
 renderSpreadsheet (Spreadsheet cells) = 
     let
@@ -75,15 +78,18 @@ renderSpreadsheet (Spreadsheet cells) =
     in
         spreadsheetString
 
+-- auxiliary method to add indexes for rows        
 addRowsIndexes:: Int -> [[Cell]] -> [String] -> [String]
 addRowsIndexes i [] _ = []
 addRowsIndexes i(x:xs) (y:ys) = [show i ++ y] ++ (addRowsIndexes (i+1) xs ys)  
 
-
+-- auxiliary method to display indexes of columns 
 getFristRowString:: Int -> Int -> String
 getFristRowString a nCols = if a <= nCols then show a ++ [' '| x <- [1..cellWidth]] ++ getFristRowString (a + 1) nCols
                             else []
-        
+       
+-- finds in given spreadsheet indicated by reference cell and displays value
+-- additionally proceed validation if reference is valid        
 showCell :: Spreadsheet -> Ref -> String
 showCell (Spreadsheet cells) (Ref rowId colId) = 
     if (validateRefs (nrows cells) (ncols cells) [(Ref rowId colId)]) then
@@ -107,7 +113,7 @@ deserialize cellLists =
         Spreadsheet (fromLists decodedCellLists)
     
 ------------------------ Private part ------------------------
-
+-- checks if the given reference is in range of the spreadsheet
 validateRefs :: Int -> Int -> [Ref] -> Bool
 validateRefs rowsCnt colsCnt refs = 
     let 
@@ -117,6 +123,7 @@ validateRefs rowsCnt colsCnt refs =
     in
         checkRefs refs     
 
+-- validate if the aggregate operation's range doesn't contain destination cell - to prevent infinite loop 
 validateOppCell:: Ref -> [Ref] -> Bool
 validateOppCell cellRef [] = False
 validateOppCell cellRef (x:xs) = refToTuple cellRef == refToTuple x || validateOppCell cellRef xs

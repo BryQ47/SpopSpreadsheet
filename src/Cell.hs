@@ -13,12 +13,14 @@ import Data.Maybe
 import Data.List
 import Data.List.Split
 
+-- According to adopted convetions comma separates sheet coordinates, semicolon is used for defining range 
 refSeparator = ","
 refsSeparator = ";"
 
 -- Address of a Cell in Spreadsheet
 data Ref = Ref Int Int
 
+-- auxilary methods used in parsing process
 refToTuple :: Ref -> (Int,Int)
 refToTuple (Ref x y) = (x, y)
 
@@ -28,6 +30,7 @@ tupleToRef (x,y) = (Ref x y)
 instance Show Ref where
     show (Ref x y) = (show x) ++ refSeparator ++ (show y)
 
+-- dedicated for aggregate functions 
 data CellOperation = 
     OpSum |
     OpMult |
@@ -38,6 +41,7 @@ instance Show CellOperation where
     show OpMult = "Mult"
     show OpAvg = "Avg"
 
+-- custom type defined for different contents of sheet's cell
 data Cell =
     EmptyCell |
     StrCell String |
@@ -51,6 +55,7 @@ instance Show Cell where
     show (OpCell opType refs) = "=" ++ (show opType) ++ "(" ++ (showRefs refs) ++ ")"
 
 
+--
 readCell :: String -> Maybe Cell
 readCell str = case str of
         "" -> Just EmptyCell
